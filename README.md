@@ -4,16 +4,14 @@ Reusable Django utilities and management commands for Toggle projects.
 
 ---
 
-## 📦 Features
+## Features
 
 - Shared management command: `wait_for_resources`
   — Wait for database, Redis, Minio (S3) resources to be available before startup
-- Reusable helpers in `toggle_django_utils.utils`
-- Easily extensible: add your own commands and utilities!
 
 ---
 
-## 🚀 Installation
+## Installation
 
 **Using [uv](https://github.com/astral-sh/uv):**
 ```bash
@@ -33,7 +31,7 @@ toggle-django-utils = { git = "ssh://git@github.com/toggle-corp/toggle-django-ut
 
 ---
 
-## 🛠 Setup in Django
+## Setup in Django
 
 1. **Add to `INSTALLED_APPS` in your Django project's `settings.py`:**
 
@@ -49,7 +47,7 @@ toggle-django-utils = { git = "ssh://git@github.com/toggle-corp/toggle-django-ut
 
 ---
 
-## ⚡ Usage
+## Usage
 
 **Access the management command:**
 ```bash
@@ -66,18 +64,6 @@ python manage.py wait_for_resources --db --redis
 ```bash
 python manage.py wait_for_resources --db --redis
 python manage.py wait_for_resources --timeout 300 --minio
-```
-
----
-
-## 🧩 Using Utilities Programmatically
-
-You can import and use helpers from the package:
-
-```python
-from toggle_django_utils.utils.retry import RetryHelper
-
-retry = RetryHelper()
 ```
 
 ---
@@ -101,7 +87,7 @@ toggle-django-utils/
 
 ---
 
-## 🏗 Development
+## Development
 
 1. Clone the repository
 2. Install as editable with uv:
@@ -117,6 +103,6 @@ toggle-django-utils/
 
 ---
 
-## 📝 License
+## License
 
 Apache-2.0

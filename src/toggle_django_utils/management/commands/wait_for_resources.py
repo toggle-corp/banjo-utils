@@ -8,11 +8,11 @@ from django.core.management.base import BaseCommand
 from django.db import connections
 from django.db.utils import OperationalError
 from redis.exceptions import ConnectionError as RedisConnectionError
+
 from toggle_django_utils.utils.retry import RetryHelper
 
 
-class TimeoutException(Exception):
-    ...
+class TimeoutException(Exception): ...
 
 
 def timeout_handler(*_):
@@ -55,7 +55,9 @@ class Command(BaseCommand):
     def wait_for_minio(self):
         self.stdout.write("Waiting for Minio...")
         endpoint_url = getattr(settings, "AWS_S3_PROXIES", {}).get("http") or getattr(
-            settings, "AWS_S3_ENDPOINT_URL", None
+            settings,
+            "AWS_S3_ENDPOINT_URL",
+            None,
         )
         if endpoint_url is None:
             self.stdout.write(self.style.WARNING("No endpoint_url is provided. Skipping wait"))
