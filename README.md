@@ -68,37 +68,20 @@ python manage.py wait_for_resources --timeout 300 --minio
 
 ---
 
-## Project Structure
-
-```
-toggle-django-utils/
-├─ src/
-│   └─ toggle_django_utils/
-│       ├─ __init__.py
-│       ├─ apps.py
-│       ├─ management/
-│       │   └─ commands/
-│       │       └─ wait_for_resources.py
-│       └─ utils/
-│           └─ retry.py
-├─ pyproject.toml
-├─ README.md
-```
-
----
-
 ## Development
 
 1. Clone the repository
 2. Install as editable with uv:
     ```bash
-    uv pip install -e .
+    uv sync --all-groups --all-extras
     ```
-3. Run type checking and linting:
+3. Type checking
     ```bash
-    uv pip install -e ".[dev]"
-    uv run pyright
-    uv run ruff src/
+    uv run --all-groups --all-extras pyright
+    ```
+3. Running Tests
+    ```bash
+    uv run --all-groups --all-extras pytest
     ```
 
 ---

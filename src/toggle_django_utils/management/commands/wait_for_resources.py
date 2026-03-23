@@ -1,13 +1,15 @@
 import signal
+from typing import Any
 from urllib.parse import urljoin
 
 import httpx
 from django.conf import settings
 from django.core.cache import cache
-from django.core.management.base import BaseCommand
+from django.core.management.base import BaseCommand, CommandParser
 from django.db import connections
 from django.db.utils import OperationalError
 from redis.exceptions import ConnectionError as RedisConnectionError
+from typing_extensions import override
 
 from toggle_django_utils.utils.retry import RetryHelper
 
@@ -15,14 +17,14 @@ from toggle_django_utils.utils.retry import RetryHelper
 class TimeoutException(Exception): ...
 
 
-def timeout_handler(*_):
+def timeout_handler(*_: Any) -> None:
     raise TimeoutException("The command timed out.")
 
 
 class Command(BaseCommand):
     help = "Wait for resources our application depends on"
 
-    def wait_for_db(self):
+    def wait_for_db(self) -> None:
         self.stdout.write("Waiting for DB...")
         retry_helper = RetryHelper()
         while True:
@@ -36,7 +38,7 @@ class Command(BaseCommand):
             retry_helper.wait()
         self.stdout.write(self.style.SUCCESS(f"DB is available after {retry_helper.total_time()} seconds"))
 
-    def wait_for_redis(self):
+    def wait_for_redis(self) -> None:
         self.stdout.write("Waiting for Redis...")
         retry_helper = RetryHelper()
         while True:
@@ -52,7 +54,7 @@ class Command(BaseCommand):
             retry_helper.wait()
         self.stdout.write(self.style.SUCCESS(f"Redis is available after {retry_helper.total_time()} seconds"))
 
-    def wait_for_minio(self):
+    def wait_for_minio(self) -> None:
         self.stdout.write("Waiting for Minio...")
         endpoint_url = getattr(settings, "AWS_S3_PROXIES", {}).get("http") or getattr(
             settings,
@@ -74,7 +76,8 @@ class Command(BaseCommand):
             retry_helper.wait()
         self.stdout.write(self.style.SUCCESS(f"Minio is available after {retry_helper.total_time()} seconds"))
 
-    def add_arguments(self, parser):
+    @override
+    def add_arguments(self, parser: CommandParser) -> None:
         parser.add_argument(
             "--timeout",
             type=int,
@@ -85,12 +88,11 @@ class Command(BaseCommand):
         parser.add_argument("--redis", action="store_true", help="Wait for Redis to be available")
         parser.add_argument("--minio", action="store_true", help="Wait for MinIO (S3) storage to be available")
 
-    def handle(self, **kwargs):
+    @override
+    def handle(self, *_: Any, **kwargs: Any) -> None:
         timeout = kwargs["timeout"]
-
         signal.signal(signal.SIGALRM, timeout_handler)
         signal.alarm(timeout)
-
         try:
             if kwargs.get("db"):
                 self.wait_for_db()

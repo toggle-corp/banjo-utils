@@ -21,23 +21,19 @@ dependencies = [
   "redis>=4.0",
 ]
 
-[project.optional-dependencies]
+[dependency-groups]
 dev = [
     "django-stubs",
     "colorlog",
     "djangorestframework-stubs>=3.15.3",
     "types-factory-boy>=0.4.1",
 ]
-
-[dependency-groups]
-dev = [
-    "pandas-stubs",
-    "djangorestframework-stubs>=3.15.3",
-    "celery-types",
-    "types-factory-boy>=0.4.1",
-    "ipython",
-    "colorlog",
-    "json5",
+test = [
+    "pytest-django",
+    "pytest-mock",
+    "pytest-icdiff",
+    "pytest-ordering",
+    "pytest-profiling",
 ]
 
 [project.urls]
@@ -52,7 +48,6 @@ packages = ["src/toggle_django_utils"]
 "__init__.py" = ["E402"]
 "/**/tests/*_mock_data.py" = ["E501"]
 "**/snap_test_*.py" = ["E501"]
-"!./apps/**/models.py" = ["D101"]  # undocumented-public-class
 
 [tool.ruff]
 line-length = 125
@@ -156,7 +151,6 @@ typeCheckingMode = "standard"
 analyzeUnannotatedFunctions = true
 enableReachabilityAnalysis = true
 strictDictionaryInference = true
-strictListInteference = true
 strictSetInference = true
 reportCallInDefaultInitializer = "information"
 reportConstantRedefinition = "error"
@@ -173,7 +167,6 @@ reportMissingTypeArgument = "warning"
 reportMissingTypeStubs = "warning"
 reportPrivateUsage = "error"
 reportPropertyTypeMismatch = "error"
-reportShadowedImports = "error"
 reportUninitializedInstanceVariable = "warning"
 reportUnknownArgumentType = "none"
 reportUnknownLambdaType = "none"
