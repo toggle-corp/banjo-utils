@@ -1,8 +1,14 @@
+from __future__ import annotations
+
+import typing
+
+if typing.TYPE_CHECKING:
+    from django.conf import LazySettings
+
 from io import StringIO
 from typing import Any
 from unittest.mock import MagicMock, patch
 
-from django.conf import LazySettings
 from django.core.management import call_command
 from django.db.utils import OperationalError
 

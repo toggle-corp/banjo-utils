@@ -9,23 +9,22 @@ name = "toggle-django-utils"
 version = "0.1.0"
 description = "Shared Django utilities for Toggle projects"
 readme = "README.md"
-requires-python = ">=3.11,<4"
+requires-python = ">=3.8,<4"
 license = { text = "Apache-2.0" }
 authors = [
   { name = "Toggle developer", email = "dev@togglecorp.com" }
 ]
 
 dependencies = [
-  "Django>=4",
+  "Django>=3.2",
   "httpx>=0.28.1",
-  "redis>=4.0",
+  "django-redis>=5.3.0,<6"
 ]
 
 [dependency-groups]
 dev = [
     "django-stubs",
     "colorlog",
-    "djangorestframework-stubs>=3.15.3",
     "types-factory-boy>=0.4.1",
 ]
 test = [

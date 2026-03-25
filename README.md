@@ -26,7 +26,7 @@ dependencies = [
 ]
 
 [tool.uv.sources]
-toggle-django-utils = { git = "ssh://git@github.com/toggle-corp/toggle-django-utils", branch = "main" }
+toggle-django-utils = { git = "https://github.com/toggle-corp/toggle-django-utils", branch = "main" }
 ```
 
 ---

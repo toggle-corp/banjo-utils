@@ -1,6 +1,10 @@
-import time
+from __future__ import annotations
 
-from pytest_mock import MockerFixture
+import time
+import typing
+
+if typing.TYPE_CHECKING:
+    from pytest_mock import MockerFixture
 
 from toggle_django_utils.utils.retry import RetryHelper
 
