@@ -8,6 +8,8 @@ Reusable Django utilities and management commands for Toggle projects.
 
 - Shared management command: `wait_for_resources`
   — Wait for database, Redis, Minio (S3) resources to be available before startup
+- Create Initial Users: `create_initial_users`
+    - Create Users with specified roles and permissions, useful to populate the database with default users during development or testing
 
 ---
 
@@ -64,6 +66,23 @@ python manage.py wait_for_resources --db --redis
 ```bash
 python manage.py wait_for_resources --db --redis
 python manage.py wait_for_resources --timeout 300 --minio
+python manage.py create_initial_users --users-json="
+[
+    {
+        "username": "admin",
+        "email": "test@example.com",
+        "password": "admin123",
+        "is_superuser": true,
+        "is_staff": true
+    },
+    {
+        "username": "user1",
+        "email": "user1@gmail.com",
+        "password": "user123",
+        "is_superuser": false,
+        "is_staff": false
+    }
+]'
 ```
 
 ---
@@ -82,6 +101,11 @@ python manage.py wait_for_resources --timeout 300 --minio
 3. Running Tests
     ```bash
     uv run --all-groups --all-extras pytest
+    ```
+4. Run commands for example project
+    ```bash
+    uv run --all-groups --all-extras python example/manage.py runserver
+    uv run --all-groups --all-extras python example/manage.py wait_for_resources --db --redis
     ```
 
 ---
