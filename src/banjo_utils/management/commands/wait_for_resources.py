@@ -11,7 +11,7 @@ from django.db.utils import OperationalError
 from redis.exceptions import ConnectionError as RedisConnectionError
 from typing_extensions import override
 
-from toggle_django_utils.utils.retry import RetryHelper
+from banjo_utils.utils.retry import RetryHelper
 
 
 class TimeoutException(Exception): ...

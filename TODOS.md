@@ -1,7 +1,7 @@
 - We can use something like this inside <settings.py>
 
 ```
-TOGGLE_DJANGO_UTILS_CONFIG = {
+BANJO_UTILS_CONFIG = {
     "WAIT_FOR_RESOURCES": {
         "ALIAS": {
             "dev": ["db", "redis", "minio"],

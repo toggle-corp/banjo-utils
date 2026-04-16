@@ -13,7 +13,7 @@ INSTALLED_APPS = [
     "django.contrib.contenttypes",
     "django.contrib.sessions",
     "django.contrib.messages",
-    "toggle_django_utils",
+    "banjo_utils",
 ]
 
 MIDDLEWARE = [
@@ -26,7 +26,7 @@ WSGI_APPLICATION = "main.wsgi.application"
 DATABASES = {
     "default": {
         "ENGINE": "django.db.backends.sqlite3",
-        "NAME": ":memory:",
+        "NAME": BASE_DIR / "db.sqlite3",
     },
 }
 

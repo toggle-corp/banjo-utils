@@ -1,4 +1,4 @@
-# toggle-django-utils
+# Banjo utils
 
 Reusable Django utilities and management commands for Toggle projects.
 
@@ -8,6 +8,8 @@ Reusable Django utilities and management commands for Toggle projects.
 
 - Shared management command: `wait_for_resources`
   — Wait for database, Redis, Minio (S3) resources to be available before startup
+- Create Initial Users: `create_initial_users`
+    - Create Users with specified roles and permissions, useful to populate the database with default users during development or testing
 
 ---
 
@@ -15,35 +17,32 @@ Reusable Django utilities and management commands for Toggle projects.
 
 **Using [uv](https://github.com/astral-sh/uv):**
 ```bash
-uv pip install "git+ssh://git@github.com/toggle-corp/toggle-django-utils.git@main"
+uv pip install "git+https://github.com/toggle-corp/banjo-utils.git@v0.1.0"
 ```
 
 Or add to your `pyproject.toml`:
 ```toml
 [project]
 dependencies = [
-    "toggle-django-utils",
+    "banjo-utils",
 ]
 
 [tool.uv.sources]
-toggle-django-utils = { git = "https://github.com/toggle-corp/toggle-django-utils", branch = "main" }
+banjo-utils = { git = "https://github.com/toggle-corp/banjo-utils", tag = "v0.1.0" }
 ```
 
 ---
 
 ## Setup in Django
 
-1. **Add to `INSTALLED_APPS` in your Django project's `settings.py`:**
+- **Add to `INSTALLED_APPS` in your Django project's `settings.py`:**
 
     ```python
     INSTALLED_APPS = [
         # ... your other apps ...
-        "toggle_django_utils",
+        "banjo_utils",
     ]
     ```
-
-2. (Optional) If your `settings.py` uses custom configs, ensure `"toggle_django_utils"` remains in the app list.
-
 
 ---
 
@@ -55,15 +54,32 @@ python manage.py wait_for_resources --db --redis
 ```
 
 **Command options:**
-- `--db` &nbsp;&nbsp;&nbsp;&nbsp; Wait for database
-- `--redis` &nbsp; Wait for Redis server
-- `--minio` &nbsp; Wait for Minio (S3 storage)
-- `--timeout` &nbsp; Set max wait time (seconds)
+- `--db`: Wait for database
+- `--redis`: Wait for Redis server
+- `--minio`: Wait for Minio (S3 storage)
+- `--timeout`: Set max wait time (seconds)
 
 **Examples:**
 ```bash
 python manage.py wait_for_resources --db --redis
 python manage.py wait_for_resources --timeout 300 --minio
+python manage.py create_initial_users --users-json="
+[
+    {
+        "username": "admin",
+        "email": "test@example.com",
+        "password": "admin123",
+        "is_superuser": true,
+        "is_staff": true
+    },
+    {
+        "username": "user1",
+        "email": "user1@gmail.com",
+        "password": "user123",
+        "is_superuser": false,
+        "is_staff": false
+    }
+]'
 ```
 
 ---
@@ -82,6 +98,11 @@ python manage.py wait_for_resources --timeout 300 --minio
 3. Running Tests
     ```bash
     uv run --all-groups --all-extras pytest
+    ```
+4. Run commands for example project
+    ```bash
+    uv run --all-groups --all-extras python example/manage.py runserver
+    uv run --all-groups --all-extras python example/manage.py wait_for_resources --db --redis
     ```
 
 ---

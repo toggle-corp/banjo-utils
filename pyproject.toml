@@ -5,7 +5,7 @@ requires = [
 ]
 
 [project]
-name = "toggle-django-utils"
+name = "banjo-utils"
 version = "0.1.0"
 description = "Shared Django utilities for Toggle projects"
 readme = "README.md"
@@ -36,12 +36,12 @@ test = [
 ]
 
 [project.urls]
-Homepage = "https://github.com/toggle-corp/toggle-django-utils"
-Repository = "https://github.com/toggle-corp/toggle-django-utils"
-Issues = "https://github.com/toggle-corp/toggle-django-utils/issues"
+Homepage = "https://github.com/toggle-corp/banjo-utils"
+Repository = "https://github.com/toggle-corp/banjo-utils"
+Issues = "https://github.com/toggle-corp/banjo-utils/issues"
 
 [tool.hatch.build.targets.wheel]
-packages = ["src/toggle_django_utils"]
+packages = ["src/banjo_utils"]
 
 [tool.ruff.lint.per-file-ignores]
 "__init__.py" = ["E402"]
