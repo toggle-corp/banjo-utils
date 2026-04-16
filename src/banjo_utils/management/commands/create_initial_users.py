@@ -3,11 +3,12 @@ from __future__ import annotations
 import json
 import pathlib
 import typing
-from typing import Any, override
+from typing import Any
 
 from django.contrib.auth import get_user_model
 from django.contrib.auth.hashers import identify_hasher
 from django.core.management.base import BaseCommand, CommandError
+from typing_extensions import override
 
 if typing.TYPE_CHECKING:
     from django.core.management.base import CommandParser
