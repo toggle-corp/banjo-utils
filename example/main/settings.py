@@ -13,7 +13,7 @@ INSTALLED_APPS = [
     "django.contrib.contenttypes",
     "django.contrib.sessions",
     "django.contrib.messages",
-    "toggle_django_utils",
+    "banjo_utils",
 ]
 
 MIDDLEWARE = [

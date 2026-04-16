@@ -6,7 +6,7 @@ import typing
 if typing.TYPE_CHECKING:
     from pytest_mock import MockerFixture
 
-from toggle_django_utils.utils.retry import RetryHelper
+from banjo_utils.utils.retry import RetryHelper
 
 
 def test_defaults():

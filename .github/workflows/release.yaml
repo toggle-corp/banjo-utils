@@ -7,6 +7,7 @@ on:
 
 permissions:
   contents: write
+  packages: write
 
 jobs:
   generate-release:
@@ -23,7 +24,7 @@ jobs:
         id: release
         shell: bash
         run: |
-          RELEASE_VERSION=${GITHUB_REF:11}
+          RELEASE_VERSION=${GITHUB_REF:10}
 
           IS_PRERELEASE=false
           if [[ "$RELEASE_VERSION" == *dev* ]]; then
@@ -46,7 +47,7 @@ jobs:
           args: -vv --latest --no-exec --github-repo ${{ github.repository }} --strip all
         env:
           GIT_CLIFF__REMOTE__GITHUB__OWNER: toggle-corp
-          GIT_CLIFF__REMOTE__GITHUB__REPO: toggle-django-utils
+          GIT_CLIFF__REMOTE__GITHUB__REPO: banjo-utils
 
       - name: Create Github Release
         uses: softprops/action-gh-release@v2
