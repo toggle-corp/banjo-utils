@@ -54,6 +54,6 @@ jobs:
         if: github.ref_type == 'tag'
         with:
           token: ${{ secrets.GITHUB_TOKEN }}
-          name: "v${{ steps.release.outputs.release_version }}"
+          name: "${{ steps.release.outputs.release_version }}"
           prerelease: ${{ steps.release.outputs.is_prerelease }}
           body: ${{ steps.git-cliff.outputs.content }}
