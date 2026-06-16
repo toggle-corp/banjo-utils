@@ -36,7 +36,7 @@ jobs:
       - uses: pre-commit/action@main
 
   test:
-    name: Test (py${{ matrix.python-version }} / dj${{ matrix.django-version }})
+    name: Test (py${{ matrix.python-version }} / dj${{ matrix.django-version }} / celery${{ matrix.celery-version }})
     runs-on: ubuntu-latest
     needs: pre_commit_checks
     permissions:
@@ -45,18 +45,25 @@ jobs:
     strategy:
       fail-fast: false
       matrix:
+        # celery is a dev-only dependency (used by the celery_health probes).
+        # Each row pins a celery series via ``~=<version>.0`` so we exercise the
+        # 5.3 -> 5.6 range. celery 5.6 requires Python >=3.9, so py3.8 caps at 5.5.
         include:
           - python-version: "3.8"
             django-version: "3.2"
+            celery-version: "5.3"
 
           - python-version: "3.11"
             django-version: "4.2"
+            celery-version: "5.4"
 
           - python-version: "3.12"
             django-version: "5.2"
+            celery-version: "5.5"
 
           - python-version: "3.13.2"
             django-version: "6.0"
+            celery-version: "5.6"
 
     steps:
       - uses: actions/checkout@main
@@ -79,4 +86,5 @@ jobs:
         run: |
           uv run \
             --with "django~=${{ matrix.django-version }}" \
+            --with "celery~=${{ matrix.celery-version }}.0" \
             pytest tests/ -v --tb=short
