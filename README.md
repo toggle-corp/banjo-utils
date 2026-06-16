@@ -12,6 +12,8 @@ Reusable Django utilities and management commands for Toggle projects.
     - Create Users with specified roles and permissions, useful to populate the database with default users during development or testing
 - Health endpoints: `HealthProbeMiddleware`
     - Dependency-free `/healthz/live/` and `/healthz/ready/` endpoints for Kubernetes liveness/readiness probes
+- Celery worker & beat health: `banjo-celery-probe` + `banjo_utils.celery_health`
+    - Heartbeat-file liveness probes for the non-HTTP celery worker and beat processes
 
 ---
 
@@ -164,6 +166,117 @@ def traces_sampler(sampling_context):
 `before_send` hook or a logging filter — pass it whatever path that context
 exposes (`event["request"]["url"]`, `record.args`, `request.path`, …). All
 helpers honour the `BANJO_HEALTH_*` URL overrides above.
+
+---
+
+## Celery worker & beat health
+
+Celery worker and beat are **non-HTTP** processes, so `HealthProbeMiddleware`
+above does not apply to them. Instead each process periodically *touches* a
+0-byte heartbeat file, and the kubelet runs the stdlib `banjo-celery-probe`
+reader as an `exec` **liveness** probe that `stat()`s the file and fails when
+it is missing or stale.
+
+Same philosophy as the HTTP probes: pod-local, cheap, dependency-free, detects
+a *wedged* process. It deliberately does **no** broker round-trip — `celery
+inspect ping` was rejected because it causes false-positive restarts under load
+and adds broker CPU cost (see
+[celery/celery#4079](https://github.com/celery/celery/issues/4079)).
+
+Neither `celery` nor `django-celery-beat` is a runtime dependency of
+banjo-utils — a celery project already has celery installed, and beat users add
+`django-celery-beat` themselves.
+
+### The probe reader
+
+`banjo-celery-probe` is installed as a console script (stdlib-only; it imports
+neither celery nor django, so it stays fast and works in stripped images):
+
+```bash
+banjo-celery-probe [--heartbeat-file PATH] [--max-age SECONDS]
+```
+
+It exits `0` if the file was touched within `--max-age` seconds (default
+`120`), and `1` if the file is **stale or missing**. The path is resolved from,
+in order: the `--heartbeat-file` arg, the `BANJO_CELERY_HEARTBEAT_FILE` env var
+(inherited from the writer's container), then a code default.
+
+> The reader's `--max-age` is just a small staleness check. The real
+> wedge-detection budget is the kubelet's `failureThreshold × periodSeconds`,
+> set in your manifest/Helm chart (same way `api.probes` already reasons). Use
+> a `startupProbe` reusing the same exec command for boot grace rather than
+> `initialDelaySeconds`.
+
+### Worker
+
+Register the heartbeat bootstep right after creating your Celery app, e.g. in
+`main/celery.py`:
+
+```python
+from celery import Celery
+from banjo_utils.celery_health.worker import setup_worker_heartbeat
+
+app = Celery("main")
+setup_worker_heartbeat(app)  # touches /tmp/celery_worker_heartbeat every 30s
+```
+
+The bootstep runs on the worker's own `Timer` (in the parent `MainProcess`).
+Under the default **prefork** pool, long-running tasks execute in forked child
+processes and never stall the timer, so the heartbeat keeps advancing while
+real work is in flight.
+
+> **Caveat:** under the `gevent`/`eventlet` pools the timer shares the single
+> event loop with tasks, so a CPU-bound or blocking task can stall the
+> heartbeat and trigger a liveness restart. The bootstep targets prefork.
+
+### Beat
+
+Beat is customised via celery's `--scheduler` flag (not a bootstep). The
+scheduler touches the heartbeat file **after** each `tick()` completes, proving
+a tick actually ran:
+
+```bash
+# Primary path: django-celery-beat's DatabaseScheduler (most projects)
+celery -A main beat --scheduler banjo_utils.celery_health.database.HeartbeatDatabaseScheduler
+
+# Plain celery beat (no django-celery-beat)
+celery -A main beat --scheduler banjo_utils.celery_health.persistent.HeartbeatPersistentScheduler
+```
+
+To wrap any other scheduler base, mix in `HeartbeatSchedulerMixin`:
+
+```python
+from banjo_utils.celery_health import HeartbeatSchedulerMixin
+from somewhere import SomeScheduler
+
+class HeartbeatSomeScheduler(HeartbeatSchedulerMixin, SomeScheduler):
+    pass
+```
+
+Beat writes `/tmp/celery_beat_heartbeat` by default — a **different** file from
+the worker — so point the beat probe at it via `--heartbeat-file` or
+`BANJO_CELERY_HEARTBEAT_FILE` (the reader's own default targets the worker
+file). The reader's `120s` default `--max-age` suits `DatabaseScheduler` (tick
+cadence ~5s → ample margin). For `HeartbeatPersistentScheduler` the
+`max_interval` is 300s, so set `--max-age` **above** 300s.
+
+### Deployment notes
+
+These are manifest/Helm concerns (no code in banjo-utils):
+
+- **Graceful shutdown is automatic on `SIGTERM`** — celery's warm shutdown
+  stops accepting new tasks and drains in-flight ones. The only lever is
+  `terminationGracePeriodSeconds`.
+- **Beat must be a singleton.** Deploy it with `strategy: Recreate` (or
+  `maxSurge: 0`) so a rolling update never runs two beats at once — duplicate
+  schedulers fire duplicate scheduled tasks.
+- **Heartbeat file storage.** The file is 0 bytes (`touch` only bumps mtime),
+  but a container's `/tmp` is the node-disk-backed overlay layer. To avoid disk
+  writes (SSD wear) and to satisfy `readOnlyRootFilesystem: true`, mount a tiny
+  RAM-backed `emptyDir { medium: Memory, sizeLimit: 1Mi }` at the heartbeat
+  directory and set `BANJO_CELERY_HEARTBEAT_FILE` to a path inside it.
+- **Celery version:** 5.6.1 broke heartbeat-file creation; fixed in **5.6.2**.
+  Use ≥5.6.2 (or a 5.5.x release).
 
 ---
 

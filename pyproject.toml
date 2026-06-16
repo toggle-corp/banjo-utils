@@ -26,6 +26,11 @@ dev = [
     "django-stubs",
     "colorlog",
     "types-factory-boy>=0.4.1",
+    # celery / django-celery-beat are NOT runtime dependencies of banjo-utils
+    # (see celery_health/database.py). They live here so the celery health
+    # bootstep, scheduler mixins and type-checking/tests have them available.
+    "celery",
+    "django-celery-beat",
 ]
 test = [
     "pytest-django",
@@ -34,6 +39,11 @@ test = [
     "pytest-ordering",
     "pytest-profiling",
 ]
+
+[project.scripts]
+# Stdlib-only liveness probe reader for celery worker/beat heartbeats, run as a
+# Kubernetes exec probe. See banjo_utils.celery_health.
+banjo-celery-probe = "banjo_utils.celery_probe:main"
 
 [project.urls]
 Homepage = "https://github.com/toggle-corp/banjo-utils"
