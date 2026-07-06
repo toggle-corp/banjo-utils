@@ -59,7 +59,7 @@ python manage.py wait_for_resources --db --redis
 
 **Command options:**
 - `--db`: Wait for database
-- `--redis`: Wait for Redis server
+- `--redis`: Wait for Redis server (requires a redis client in your project, e.g. via `django-redis` or `redis`; it is not a banjo-utils runtime dependency)
 - `--minio`: Wait for Minio (S3 storage)
 - `--timeout`: Set max wait time (seconds)
 

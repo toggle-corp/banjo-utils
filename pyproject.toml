@@ -18,7 +18,6 @@ authors = [
 dependencies = [
   "Django>=3.2",
   "httpx>=0.28.1",
-  "django-redis>=5.3.0,<6"
 ]
 
 [dependency-groups]
@@ -31,6 +30,14 @@ dev = [
     # bootstep, scheduler mixins and type-checking/tests have them available.
     "celery",
     "django-celery-beat",
+    # django-redis is NOT a runtime dependency either: banjo-utils only touches
+    # Django's abstract cache API, so a redis-backed consumer installs
+    # django-redis themselves (it brings the ``redis`` client transitively).
+    # It lives here so ``wait_for_resources --redis`` tests can import
+    # ``redis.exceptions``. Left unpinned and untested-across-versions (unlike
+    # celery) because nothing imports ``django_redis`` and the redis path is
+    # fully mocked -- there is no version-sensitive surface to exercise.
+    "django-redis",
 ]
 test = [
     "pytest-django",

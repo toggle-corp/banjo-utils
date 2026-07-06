@@ -8,7 +8,6 @@ from django.core.cache import cache
 from django.core.management.base import BaseCommand, CommandParser
 from django.db import connections
 from django.db.utils import OperationalError
-from redis.exceptions import ConnectionError as RedisConnectionError
 from typing_extensions import override
 
 from banjo_utils.utils.retry import RetryHelper
@@ -39,6 +38,19 @@ class Command(BaseCommand):
         self.stdout.write(self.style.SUCCESS(f"DB is available after {retry_helper.total_time()} seconds"))
 
     def wait_for_redis(self) -> None:
+        # ``redis`` (redis-py) is not a banjo-utils runtime dependency; a
+        # redis-backed project supplies it (typically via django-redis). Import
+        # it lazily so ``--db``/``--minio`` never require it, and re-raise with
+        # a friendly message if the ``--redis`` path is used without it.
+        try:
+            from redis.exceptions import ConnectionError as RedisConnectionError  # noqa: PLC0415
+        except ImportError as e:
+            raise ImportError(
+                "wait_for_resources --redis requires the 'redis' package, which is "
+                "not a banjo-utils runtime dependency. Install a redis client in your "
+                "project (e.g. django-redis, which brings redis in).",
+            ) from e
+
         self.stdout.write("Waiting for Redis...")
         retry_helper = RetryHelper()
         while True:
