@@ -54,19 +54,20 @@ banjo-utils = { git = "https://github.com/toggle-corp/banjo-utils", tag = "v0.1.
 
 **Access the management command:**
 ```bash
-python manage.py wait_for_resources --db --redis
+python manage.py wait_for_resources --db --cache
 ```
 
 **Command options:**
 - `--db`: Wait for database
-- `--redis`: Wait for Redis server (requires a redis client in your project, e.g. via `django-redis` or `redis`; it is not a banjo-utils runtime dependency)
+- `--cache`: Wait for the Django cache backend (requires a redis client in your project, e.g. via `django-redis` or `redis`; it is not a banjo-utils runtime dependency)
 - `--minio`: Wait for Minio (S3 storage)
+- `--celery-broker`: Wait for the Celery broker at `CELERY_BROKER_URL` (requires `kombu`, installed with celery; it is not a banjo-utils runtime dependency)
 - `--timeout`: Set max wait time (seconds)
 
 **Examples:**
 ```bash
-python manage.py wait_for_resources --db --redis
-python manage.py wait_for_resources --timeout 300 --minio
+python manage.py wait_for_resources --db --cache
+python manage.py wait_for_resources --timeout 300 --minio --celery-broker
 python manage.py create_initial_users --users-json="
 [
     {
@@ -298,7 +299,7 @@ These are manifest/Helm concerns (no code in banjo-utils):
 4. Run commands for example project
     ```bash
     uv run --all-groups --all-extras python example/manage.py runserver
-    uv run --all-groups --all-extras python example/manage.py wait_for_resources --db --redis
+    uv run --all-groups --all-extras python example/manage.py wait_for_resources --db --cache --celery-broker
     ```
 
 ---
