@@ -168,6 +168,65 @@ def traces_sampler(sampling_context):
 exposes (`event["request"]["url"]`, `record.args`, `request.path`, …). All
 helpers honour the `BANJO_HEALTH_*` URL overrides above.
 
+### Keeping probe requests out of the access log
+
+The kubelet hits `/healthz/live/` and `/healthz/ready/` every few seconds, so
+they flood the WSGI server's access log and drown out real traffic. Drop them at
+the server layer.
+
+#### uWSGI
+
+Use an internal-routing `donotlog` rule in your `uwsgi.ini`:
+
+```ini
+# Match both trailing-slash and slash-less probe URLs.
+route = ^/healthz/(live|ready)/?$ donotlog:
+```
+
+> **Gotcha — needs PCRE.** `route` is silently ignored unless uWSGI was built
+> with PCRE support. The PyPI `uwsgi` sdist compiles at install time, so the
+> **build** environment must have the PCRE headers (`libpcre3-dev` on
+> Debian/Ubuntu) present *before* `pip`/`uv` builds uwsgi — and the `libpcre3`
+> runtime lib must survive into the final image. Verify with `ldd $(which uwsgi)
+> | grep pcre`; at startup, a PCRE-less build prints `!!! no internal routing
+> support, rebuild with pcre support !!!`. If uwsgi is served from a warm
+> build cache (e.g. uv's persistent cache keyed on an unchanged lockfile), evict
+> it (`uv cache clean uwsgi`) so it recompiles against the newly-present headers.
+
+> **Caveat.** `donotlog` is unconditional — it also suppresses probe `5xx`
+> responses. uWSGI can't make logging status-code-conditional; use gunicorn (or
+> a proxy that can) if you need to keep logging probe errors.
+
+#### gunicorn
+
+gunicorn logs access lines through the stdlib `logging` module, so attach a
+filter to the `gunicorn.access` logger in your `gunicorn.conf.py`. Because the
+filter sees the whole access record, it can keep the probe's non-2xx responses —
+avoiding the uWSGI caveat above:
+
+```python
+# gunicorn.conf.py
+import logging
+
+from banjo_utils.health import is_health_probe_path
+
+
+class _IgnoreHealthyProbes(logging.Filter):
+    def filter(self, record):
+        # gunicorn access atoms: 'U' = path (no query), 's' = status code.
+        atoms = record.args if isinstance(record.args, dict) else {}
+        is_probe = is_health_probe_path(atoms.get("U"))
+        is_ok = str(atoms.get("s", "")).startswith("2")
+        return not (is_probe and is_ok)  # keep probe 4xx/5xx, drop probe 2xx
+
+
+def on_starting(server):
+    logging.getLogger("gunicorn.access").addFilter(_IgnoreHealthyProbes())
+```
+
+> Drop the `is_ok` check (`return not is_probe`) to silence probes
+> unconditionally, matching uWSGI's `donotlog` behaviour.
+
 ---
 
 ## Celery worker & beat health

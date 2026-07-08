@@ -64,7 +64,12 @@ This mirrors the philosophy already established for the HTTP probes in
   task can stall the heartbeat and cause a false restart.
 - **Bad:** the beat reader's `--max-age` must exceed the scheduler's tick
   cadence — fine for `DatabaseScheduler` (~5s), but `PersistentScheduler`'s
-  `max_interval` is 300s, so its probe needs `--max-age > 300`.
+  `max_interval` is 300s, so its probe needs `--max-age > 300`. This cadence is
+  also **operator-overridable**: `celery beat --max-interval <seconds>` raises
+  the scheduler's `max_interval` regardless of scheduler class, so beat sleeps
+  (and skips touching the heartbeat) for up to that long between ticks. A value
+  above the probe's `--max-age` silently causes false-positive restarts of a
+  healthy beat — keep `--max-interval` below `--max-age`.
 - **Cost:** the writer must be wired into project code (`setup_worker_heartbeat`
   / the `--scheduler` flag), and the heartbeat directory should be a small
   RAM-backed `emptyDir` to avoid disk wear — a manifest/Helm concern.

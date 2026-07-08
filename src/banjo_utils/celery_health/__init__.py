@@ -64,6 +64,17 @@ class HeartbeatSchedulerMixin:
 
     The path comes from ``BANJO_CELERY_HEARTBEAT_FILE`` (set by the chart),
     falling back to :data:`heartbeat_file_default`.
+
+    .. warning::
+       The heartbeat advances **only as often as beat ticks**, and the tick
+       cadence is capped by the scheduler's ``max_interval``. The probe's
+       ``--max-age`` must therefore exceed that cap, or a perfectly healthy beat
+       gets restarted between ticks. ``DatabaseScheduler`` defaults to ~5s
+       (fine), but ``max_interval`` is operator-overridable via
+       ``celery beat --max-interval <seconds>``: passing e.g. ``--max-interval
+       3600`` makes beat sleep up to an hour between ticks, so the heartbeat
+       goes stale and the probe false-restarts beat. Keep ``--max-interval``
+       (if set at all) below the probe's ``--max-age``.
     """
 
     #: Per-class default path; overridden by the env var at tick time.
