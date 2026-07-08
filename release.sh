@@ -5,7 +5,12 @@ export SCRIPT_DIR
 
 function release_custom_hook {
     # shellcheck disable=SC2154
-    echo "No custom hook for: \"${version_tag#v}\""
+    local version="${version_tag#v}"
+    sed -i -E "s/^version = \".*\" # managed by release.sh$/version = \"${version}\" # managed by release.sh/" "$SCRIPT_DIR/pyproject.toml"
+    git add "$SCRIPT_DIR/pyproject.toml"
+    # Refresh the lockfile so it reflects the new version (no-op if already in sync)
+    uv lock --project "$SCRIPT_DIR"
+    git add "$SCRIPT_DIR/uv.lock"
 }
 
 export -f release_custom_hook

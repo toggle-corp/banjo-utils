@@ -6,7 +6,7 @@ requires = [
 
 [project]
 name = "banjo-utils"
-version = "0.1.0"
+version = "0.1.0" # managed by release.sh
 description = "Shared Django utilities for Toggle projects"
 readme = "README.md"
 requires-python = ">=3.8,<4"
