@@ -11,6 +11,7 @@ from unittest.mock import MagicMock, patch
 
 from django.core.management import call_command
 from django.db.utils import OperationalError
+from kombu.exceptions import OperationalError as KombuOperationalError
 
 from banjo_utils.management.commands.wait_for_resources import (
     TimeoutException,
@@ -37,13 +38,41 @@ def test_wait_for_db_retries_then_succeeds(mock_sleep: MagicMock, mock_connectio
 
 @patch("banjo_utils.management.commands.wait_for_resources.cache")
 @patch("time.sleep", return_value=None)
-def test_wait_for_redis_success(mock_sleep: MagicMock, mock_cache: MagicMock):
+def test_wait_for_cache_success(mock_sleep: MagicMock, mock_cache: MagicMock):
     mock_cache.set.return_value = None
     mock_cache.get.return_value = "pong"
 
-    out, _ = run_command("--redis")
+    out, _ = run_command("--cache")
 
-    assert "Redis is available" in out
+    assert "Cache is available" in out
+    mock_sleep.assert_not_called()
+
+
+@patch("kombu.Connection")
+@patch("time.sleep", return_value=None)
+def test_wait_for_celery_broker_retries_then_succeeds(
+    mock_sleep: MagicMock,
+    mock_connection: MagicMock,
+    settings: LazySettings,
+):
+    settings.CELERY_BROKER_URL = "amqp://guest:guest@rabbitmq:5672//"
+
+    conn = mock_connection.return_value.__enter__.return_value
+    conn.ensure_connection.side_effect = [KombuOperationalError, None]
+
+    out, _ = run_command("--celery-broker")
+
+    assert "Celery broker is available" in out
+    assert mock_sleep.called
+
+
+@patch("time.sleep", return_value=None)
+def test_celery_broker_skipped_when_no_broker_url(mock_sleep: MagicMock, settings: LazySettings):
+    settings.CELERY_BROKER_URL = None
+
+    out, _ = run_command("--celery-broker")
+
+    assert "Skipping wait" in out
     mock_sleep.assert_not_called()
 
 
@@ -94,7 +123,7 @@ def test_multiple_flags(mock_sleep: MagicMock, mock_cache: MagicMock, mock_conne
     mock_cache.set.return_value = None
     mock_cache.get.return_value = "pong"
 
-    out, _ = run_command("--db", "--redis")
+    out, _ = run_command("--db", "--cache")
 
     assert "DB is available" in out
-    assert "Redis is available" in out
+    assert "Cache is available" in out

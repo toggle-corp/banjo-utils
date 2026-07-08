@@ -16,6 +16,7 @@ def pytest_configure():
             "django.contrib.contenttypes",
             "django.contrib.sessions",
             "django.contrib.messages",
+            "django_celery_beat",
             "banjo_utils",
         ],
         MIDDLEWARE=[
