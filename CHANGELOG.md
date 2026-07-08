@@ -1,5 +1,33 @@
 # Changelog
 
+## [v0.2.0](https://github.com/toggle-corp/banjo-utils/compare/v0.1.0..v0.2.0) - 2026-07-08
+### Changes:
+
+#### 🚀  Features
+
+- Release.sh update pyproject version - ([6abd0a6](https://github.com/toggle-corp/banjo-utils/commit/6abd0a604c362b3bd1d94de4e4c608a8a5f027d0))
+- [**breaking**] Rename wait_for_resources --redis to --cache; add --celery-broker - ([395c8ca](https://github.com/toggle-corp/banjo-utils/commit/395c8cab67a3f8d2fe3ee072c395240c911e0cab))
+- Add celery worker & beat health probes - ([9e6ec59](https://github.com/toggle-corp/banjo-utils/commit/9e6ec59c55ce9c440bd1f8cbb9222d871c64c20a))
+- Add health endpoints for Kubernetes probes - ([d56a862](https://github.com/toggle-corp/banjo-utils/commit/d56a862b9285faf2eaebe1bb193f962c3690cd97))
+
+#### 🚜 Refactor
+
+- Move django-redis to a dev-only dependency - ([4c6cdf4](https://github.com/toggle-corp/banjo-utils/commit/4c6cdf4a4871b1671e35e379a9d02cd2d1296177))
+
+#### 📚 Documentation
+
+- Max_interval behaviour - ([97b5c36](https://github.com/toggle-corp/banjo-utils/commit/97b5c3643de70714d70b246bba05987eef20d493))
+- Add ADR for celery heartbeat-file health probes - ([32fcc0d](https://github.com/toggle-corp/banjo-utils/commit/32fcc0df464ba4e70524ddd6f1e423c2fa411e97))
+
+#### ⚙️ Miscellaneous Tasks
+
+- Test against multiple celery versions - ([4e20965](https://github.com/toggle-corp/banjo-utils/commit/4e20965dfeca99d24fae2d8f9c352e760a6e6984))
+- Gitignore serena - ([8d11835](https://github.com/toggle-corp/banjo-utils/commit/8d118357d63597464b7a4379c0309c0e7db9bff9))
+
+### 🍻 Pull Requests (1)
+- (#5) [Feat: add health endpoints for Kubernetes probes](https://github.com/toggle-corp/banjo-utils/pull/5)
+
+
 ## [v0.1.0] - 2026-04-16
 ### Changes:
 
