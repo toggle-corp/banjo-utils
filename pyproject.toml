@@ -38,6 +38,10 @@ dev = [
     # celery) because nothing imports ``django_redis`` and the redis path is
     # fully mocked -- there is no version-sensitive surface to exercise.
     "django-redis",
+    # django-storages[s3] (boto3) is NOT a runtime dependency either: a project
+    # using S3 storage installs it. It lives here so ``wait_for_resources --s3``
+    # tests can build real S3Storage instances (the boto3 client is mocked).
+    "django-storages[s3]>=1.14.6",
 ]
 test = [
     "pytest-django",

@@ -1,3 +1,5 @@
+from __future__ import annotations
+
 import signal
 from typing import Any
 from urllib.parse import urljoin
@@ -5,7 +7,7 @@ from urllib.parse import urljoin
 import httpx
 from django.conf import settings
 from django.core.cache import cache
-from django.core.management.base import BaseCommand, CommandParser
+from django.core.management.base import BaseCommand, CommandError, CommandParser
 from django.db import connections
 from django.db.utils import OperationalError
 from typing_extensions import override
@@ -123,6 +125,76 @@ class Command(BaseCommand):
             retry_helper.wait()
         self.stdout.write(self.style.SUCCESS(f"Minio is available after {retry_helper.total_time()} seconds"))
 
+    def get_s3_storages(self, s3_storage_class: type) -> dict[str, Any]:
+        """Return the configured storages (by alias) that are S3-backed."""
+        try:
+            from django.core.files.storage import storages  # noqa: PLC0415
+        except ImportError:
+            # Django < 4.2 has no ``STORAGES``; only the default storage is checked.
+            from django.core.files.storage import default_storage  # noqa: PLC0415
+
+            candidates: dict[str, Any] = {"default": default_storage}
+        else:
+            candidates = {alias: storages[alias] for alias in settings.STORAGES}
+        return {alias: storage for alias, storage in candidates.items() if isinstance(storage, s3_storage_class)}
+
+    def wait_for_s3(self) -> None:
+        # ``django-storages`` and ``boto3`` are not banjo-utils runtime
+        # dependencies; an S3-backed project supplies them. Import them lazily so
+        # the other checks never require them, and re-raise with a friendly
+        # message if the ``--s3`` path is used without them.
+        try:
+            from botocore.exceptions import BotoCoreError, ClientError  # noqa: PLC0415
+
+            try:
+                from storages.backends.s3 import S3Storage  # noqa: PLC0415
+
+                s3_storage_class: type = S3Storage
+            except ImportError:
+                # django-storages < 1.14 only ships the s3boto3 module.
+                from storages.backends.s3boto3 import S3Boto3Storage  # noqa: PLC0415
+
+                s3_storage_class = S3Boto3Storage
+        except ImportError as e:
+            raise ImportError(
+                "wait_for_resources --s3 requires 'django-storages[s3]' (django-storages "
+                "with boto3), which is not a banjo-utils runtime dependency. Install it "
+                "in your project.",
+            ) from e
+
+        s3_storages = self.get_s3_storages(s3_storage_class)
+        if not s3_storages:
+            self.stdout.write(self.style.WARNING("No S3-backed storage is configured. Skipping wait"))
+            return
+
+        for alias, storage in s3_storages.items():
+            if not storage.bucket_name:
+                raise CommandError(f"S3 storage '{alias}' has no bucket_name configured.")
+
+        self.stdout.write("Waiting for S3...")
+        pending = dict(s3_storages)
+        for alias, storage in pending.items():
+            self.stdout.write(f"Waiting for S3 bucket '{storage.bucket_name}' (storage '{alias}')...")
+        retry_helper = RetryHelper()
+        while True:
+            for alias, storage in list(pending.items()):
+                try:
+                    # The storage's own client carries its endpoint, credentials,
+                    # region and addressing style.
+                    storage.connection.meta.client.head_bucket(Bucket=storage.bucket_name)
+                    del pending[alias]
+                except (BotoCoreError, ClientError) as e:
+                    self.stdout.write(
+                        self.style.WARNING(
+                            f"S3 bucket '{storage.bucket_name}' (storage '{alias}') not available: {type(e).__name__}: {e}",
+                        ),
+                    )
+            if not pending:
+                break
+            self.stdout.write(self.style.WARNING(retry_helper.try_again_message("S3 not available")))
+            retry_helper.wait()
+        self.stdout.write(self.style.SUCCESS(f"S3 is available after {retry_helper.total_time()} seconds"))
+
     @override
     def add_arguments(self, parser: CommandParser) -> None:
         parser.add_argument(
@@ -134,6 +206,11 @@ class Command(BaseCommand):
         parser.add_argument("--db", action="store_true", help="Wait for DB to be available")
         parser.add_argument("--cache", action="store_true", help="Wait for the Django cache backend to be available")
         parser.add_argument("--minio", action="store_true", help="Wait for MinIO (S3) storage to be available")
+        parser.add_argument(
+            "--s3",
+            action="store_true",
+            help="Wait for the bucket of every S3-backed storage in STORAGES to be reachable (HeadBucket)",
+        )
         parser.add_argument(
             "--celery-broker",
             action="store_true",
@@ -150,6 +227,8 @@ class Command(BaseCommand):
                 self.wait_for_db()
             if kwargs.get("minio"):
                 self.wait_for_minio()
+            if kwargs.get("s3"):
+                self.wait_for_s3()
             if kwargs.get("cache"):
                 self.wait_for_cache()
             if kwargs.get("celery_broker"):
