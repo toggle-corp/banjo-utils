@@ -7,7 +7,7 @@ Reusable Django utilities and management commands for Toggle projects.
 ## Features
 
 - Shared management command: `wait_for_resources`
-  — Wait for database, Redis, Minio (S3) resources to be available before startup
+  — Wait for database, Redis, Minio, S3 resources to be available before startup
 - Create Initial Users: `create_initial_users`
     - Create Users with specified roles and permissions, useful to populate the database with default users during development or testing
 - Health endpoints: `HealthProbeMiddleware`
@@ -61,6 +61,7 @@ python manage.py wait_for_resources --db --cache
 - `--db`: Wait for database
 - `--cache`: Wait for the Django cache backend (requires a redis client in your project, e.g. via `django-redis` or `redis`; it is not a banjo-utils runtime dependency)
 - `--minio`: Wait for Minio (S3 storage)
+- `--s3`: Wait for the bucket of every S3-backed storage in `STORAGES` (`storages.backends.s3.S3Storage`, `S3Boto3Storage` or a subclass). Each bucket is checked with `HeadBucket` using that storage's own client, so its endpoint, credentials, region and addressing style apply; the credentials need `s3:ListBucket` on the bucket. Non-S3 storages are skipped; with none configured it prints a warning and does not wait. On Django < 4.2 only the default storage is checked. Requires `django-storages[s3]`; it is not a banjo-utils runtime dependency
 - `--celery-broker`: Wait for the Celery broker at `CELERY_BROKER_URL` (requires `kombu`, installed with celery; it is not a banjo-utils runtime dependency)
 - `--timeout`: Set max wait time (seconds)
 
@@ -68,6 +69,7 @@ python manage.py wait_for_resources --db --cache
 ```bash
 python manage.py wait_for_resources --db --cache
 python manage.py wait_for_resources --timeout 300 --minio --celery-broker
+python manage.py wait_for_resources --db --s3
 python manage.py create_initial_users --users-json="
 [
     {
