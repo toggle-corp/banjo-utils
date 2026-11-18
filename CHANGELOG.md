@@ -1,5 +1,16 @@
 # Changelog
 
+## [v0.3.0](https://github.com/toggle-corp/banjo-utils/compare/v0.2.0..v0.3.0) - 2026-11-18
+### Changes:
+
+#### 🚀  Features
+
+- *(wait_for_resources)* Add --s3 check via head_bucket per S3 storage ([#6](https://github.com/toggle-corp/banjo-utils/issues/6)) - ([5aa32a2](https://github.com/toggle-corp/banjo-utils/commit/5aa32a29625ecac770a87d5e78ad75449f10bdd4))
+
+### 🍻 Pull Requests (1)
+- (#6) [Feat(wait_for_resources): add --s3 check via head_bucket per S3 storage](https://github.com/toggle-corp/banjo-utils/pull/6)
+
+
 ## [v0.2.0](https://github.com/toggle-corp/banjo-utils/compare/v0.1.0..v0.2.0) - 2026-07-08
 ### Changes:
 
@@ -27,6 +38,9 @@
 ### 🍻 Pull Requests (1)
 - (#5) [Feat: add health endpoints for Kubernetes probes](https://github.com/toggle-corp/banjo-utils/pull/5)
 
+### :tada: New Contributors (1)
+
+- [@thenav56](https://github.com/thenav56) made their first contribution
 
 ## [v0.1.0] - 2026-04-16
 ### Changes:
